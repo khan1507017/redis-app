@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/joho/godotenv"
+	"log"
 	"os"
 	"strconv"
 )
@@ -22,8 +24,26 @@ var RedisSlaveCount int
 //temp variable
 var boolVal bool
 var slaveCountTemp string
+var RunMode string
 
 func InitEnvironmentVariables() error {
+
+	//checking runMode
+	RunMode = os.Getenv("RUN_MODE")
+	if RunMode == "" {
+		RunMode = DEVELOP
+	}
+	var err error
+	log.Println("RUN MODE:", RunMode)
+
+	//loading envArs from .env file is runMode != PRODUCTION
+	if RunMode != PRODUCTION {
+		err = godotenv.Load()
+		if err != nil {
+			log.Println("ERROR: ", err.Error())
+			return err
+		}
+	}
 
 	//DB CREDENTIALS + Cluster Endpoint + Others
 	RedisPassword, boolVal = os.LookupEnv("REDIS_PASSWORD")
@@ -34,7 +54,7 @@ func InitEnvironmentVariables() error {
 	if boolVal == false {
 		return errors.New("MASTER_ENDPOINT not found in envVars")
 	}
-	err := initSlaveEndpoints()
+	err = initSlaveEndpoints()
 	if err != nil {
 		return err
 	}
